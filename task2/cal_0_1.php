@@ -2,11 +2,11 @@
 <?php
 class Calendar
 {
-    public $month; //текущий месяц
-    public $year; //текущий год
-    public $amountDay; //кол-во дней в месяце от 28 до 31
-    public $numberDay; //определяем день недели 1ого числа текущего месяца
-    public $countDays; //кол-во дней в 1ой неделе
+    protected $month; //текущий месяц
+    protected $year; //текущий год
+    protected $amountDay; //кол-во дней в месяце от 28 до 31
+    protected $numberDay; //определяем день недели 1ого числа текущего месяца
+    protected $countDays; //кол-во дней в 1ой неделе
     function __construct()
     {
         $this->month = date('n'); //номер текущего месяца
