@@ -84,12 +84,9 @@ $calendar->outputWindows();
 define ("ESC", 27);
 while (true) {
     $pressed = ncurses_getch();
-    if ($pressed == ESC) {
-        break;
-    }
-
     switch ($pressed) {
-
+        case ESC:
+            break 2;
         case NCURSES_KEY_UP:
             $calendar->year += 1;
             break;
