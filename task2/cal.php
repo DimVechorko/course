@@ -18,67 +18,47 @@ class Calendar
     function currentDate()
     {
         if ($this->month > 12) {
-            $this->month = "1";
-            $this->year += "1";
+            $this->month = 1;
+            $this->year += 1;
         }
         if ($this->month == 0) {
-            $this->month = "12";
-            $this->year -= "1";
+            $this->month = 12;
+            $this->year -= 1;
         }
         $this->amountDay = date('t', mktime(0, 0, 0, $this->month, 1, $this->year)); //кол-во дней в месяце
-        $this->numberDay = date('N', mktime(0, 0, 0, $this->month, 1, $this->year)); //определяем день недели 1ргр числа текщего месяца
+        $this->numberDay = date('N', mktime(0, 0, 0, $this->month, 1, $this->year)); //определяем день недели 1oгo числа текщего месяца
         $array = array("1" => "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС");
         $arrMonths = array("1" => "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь");
         $small = ncurses_newwin(11, 26, 7, 26);
-        $small_2 = ncurses_newwin(4, 26, 18, 26);
         ncurses_wborder($small, 0, 0, 0, 0, 0, 0, 0, 0);
-        ncurses_wborder($small_2, 0, 0, 0, 0, 0, 0, 0, 0);
         ncurses_mvwaddstr($small, 1, 9, "$this->year,");
         $month = $this->month;
         ncurses_mvwaddstr($small, 1, 14, "$arrMonths[$month]");
-        $i = "";
+        $j = 0; //позиция в строке
+        $pos = 4; //позиция строки
         foreach ($array as $arr) {
-            $i++;
-            $i = $i + 2;
-            ncurses_mvwaddstr($small, 3, $i, "$arr");
+            $j += 3;
+            ncurses_mvwaddstr($small, 3, $j, "$arr"); //выводим имена дней недели
         }
-        $daysFirstWeek = array();
-        if ($this->numberDay != 1) {
-            $pos = "4";
-        }
-        $j = "";
+        $j = 0;
         for ($i = 1; $i <= $this->numberDay - 1; $i++) {
-            $j++;
-            $j = $j + 2;
-            ncurses_mvwaddstr($small, $pos, $j, "  "); //вывод 1ой недели месяца
+            $j += 3;
+            ncurses_mvwaddstr($small, $pos, $j, "  ");
         }
-        for ($i = 1; $i <= 8 - $this->numberDay; $i++) {
-            array_push($daysFirstWeek, $i);
-            $j = $j + 3;
-            ncurses_mvwaddstr($small, 4, $j, "$i"); //вывод 1ой недели месяца
-        }
-
-        $this->countDays = count($daysFirstWeek) + 1;
-        $amountItr = array();
-        $j = "";
-        $pos = "5";
-        for ($i = $this->countDays; $i <= $this->amountDay; $i++) {
-            array_push($amountItr, $i);
-            $countItr = count($amountItr);
-            $j++;
-            $j = $j + 2;
-            if ($countItr % 7 == 0) {
-                ncurses_mvwaddstr($small, $pos, $j, "$i"); //вывод последнего дня недели
-                $pos = $pos + 1;
-                $j = "";
+        $c = $this->numberDay; //день недели
+        for ($i = 1; $i <= $this->amountDay; $i++) {
+            if ($c <= 7) {
+                $j += 3;
+                ncurses_mvwaddstr($small, $pos, $j, "$i");
             } else {
-                ncurses_mvwaddstr($small, $pos, $j, "$i"); //вывод дней недели
+                $pos += 1;
+                $j = 3;
+                ncurses_mvwaddstr($small, $pos, $j, "$i");
+                $c = 1;
             }
+            $c++;
         }
-        ncurses_mvwaddstr($small_2, 1, 1, "<- -> -листание месяца $str");
-        ncurses_mvwaddstr($small_2, 2, 1, "^  -листание года $str");
         ncurses_wrefresh($small);
-        ncurses_wrefresh($small_2);
     }
 }
 
@@ -88,13 +68,17 @@ class Output extends Calendar
     {
         // начинаем с инициализации библиотеки
         ncurses_init();
-        ncurses_savetty();
         // используем весь экран
         ncurses_newwin(0, 0, 0, 0);
+        $lower_win = ncurses_newwin(4, 26, 18, 26);
+        ncurses_mvwaddstr($lower_win, 1, 1, "листание года");
+        ncurses_mvwaddstr($lower_win, 2, 1, "листание месяца");
         // рисуем рамку вокруг окна
         ncurses_border(0, 0, 0, 0, 0, 0, 0, 0);
         ncurses_refresh(); // рисуем окна
-        parent::currentDate();
+        ncurses_wrefresh($lower_win);
+        $this->currentDate();
+
         while (true) {
             $pressed = ncurses_getch();
             if ($pressed == 27) {
@@ -103,28 +87,26 @@ class Output extends Calendar
 
             switch ($pressed) {
                 case NCURSES_KEY_UP:
-                    $this->year += "1";
-                    parent::currentDate();
+                    $this->year += 1;
                     break;
                 case NCURSES_KEY_DOWN:
-                    $this->year -= "1";
-                    parent::currentDate();
+                    $this->year -= 1;
                     break;
                 case NCURSES_KEY_RIGHT:
-                    $this->month += "1";
-                    parent::currentDate();
+                    $this->month += 1;
                     break;
                 case NCURSES_KEY_LEFT:
-                    $this->month -= "1";
-                    parent::currentDate();
+                    $this->month -= 1;
                     break;
             }
+
+            $this->currentDate();
         }
         ncurses_end(); // выходим из режима ncurses, чистим экран
     }
 }
 
 $output = new Output();
-$left_window = $output->out_window();
+$out_window = $output->out_window();
 
 
