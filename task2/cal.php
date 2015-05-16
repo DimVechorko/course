@@ -3,8 +3,8 @@
 
 class Calendar
 {
-    protected $month;
-    protected $year;
+    public $month;
+    public $year;
     protected $amountDay;
     protected $numberDay;
     protected $countDays;
@@ -15,7 +15,7 @@ class Calendar
         $this->year = date('o');
     }
 
-    function currentDate()
+    function buildCal()
     {
         if ($this->month > 12) {
             $this->month = 1;
@@ -29,84 +29,82 @@ class Calendar
         $this->numberDay = date('N', mktime(0, 0, 0, $this->month, 1, $this->year)); //определяем день недели 1oгo числа текщего месяца
         $array = array("1" => "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС");
         $arrMonths = array("1" => "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь");
-        $small = ncurses_newwin(11, 26, 7, 26);
-        ncurses_wborder($small, 0, 0, 0, 0, 0, 0, 0, 0);
-        ncurses_mvwaddstr($small, 1, 9, "$this->year,");
+        $main_win = ncurses_newwin(11, 26, 7, 26);
+        ncurses_wborder($main_win, 0, 0, 0, 0, 0, 0, 0, 0);
+        ncurses_mvwaddstr($main_win, 1, 9, "$this->year,");
         $month = $this->month;
-        ncurses_mvwaddstr($small, 1, 14, "$arrMonths[$month]");
-        $j = 0; //позиция в строке
-        $pos = 4; //позиция строки
+        ncurses_mvwaddstr($main_win, 1, 14, "$arrMonths[$month]");
+        $posinrow = 0; //позиция в строке
+        $posstr = 4; //позиция строки
         foreach ($array as $arr) {
-            $j += 3;
-            ncurses_mvwaddstr($small, 3, $j, "$arr"); //выводим имена дней недели
+            $posinrow += 3;
+            ncurses_mvwaddstr($main_win, 3, $posinrow, $arr); //выводим имена дней недели
         }
-        $j = 0;
+        $posinrow = 0;
         for ($i = 1; $i <= $this->numberDay - 1; $i++) {
-            $j += 3;
-            ncurses_mvwaddstr($small, $pos, $j, "  ");
+            $posinrow += 3;
+            ncurses_mvwaddstr($main_win, $posstr, $posinrow, "  ");
         }
-        $c = $this->numberDay; //день недели
+        $weekday = $this->numberDay; //день недели
         for ($i = 1; $i <= $this->amountDay; $i++) {
-            if ($c <= 7) {
-                $j += 3;
-                ncurses_mvwaddstr($small, $pos, $j, "$i");
+            if ($weekday <= 7) {
+                $posinrow += 3;
+                ncurses_mvwaddstr($main_win, $posstr, $posinrow, $i);
             } else {
-                $pos += 1;
-                $j = 3;
-                ncurses_mvwaddstr($small, $pos, $j, "$i");
-                $c = 1;
+                $posstr += 1;
+                $posinrow = 3;
+                ncurses_mvwaddstr($main_win, $posstr, $posinrow, $i);
+                $weekday = 1;
             }
-            $c++;
+            $weekday += 1;
         }
-        ncurses_wrefresh($small);
+        ncurses_wrefresh($main_win);
     }
-}
 
-class Output extends Calendar
-{
-    function out_window()
+    function outputWindows()
     {
-        // начинаем с инициализации библиотеки
-        ncurses_init();
         // используем весь экран
         ncurses_newwin(0, 0, 0, 0);
-        $lower_win = ncurses_newwin(4, 26, 18, 26);
+        //создаем нижнее окно под основным
+        $lower_win = ncurses_newwin(4, 26, 17, 26);
         ncurses_mvwaddstr($lower_win, 1, 1, "листание года");
         ncurses_mvwaddstr($lower_win, 2, 1, "листание месяца");
+        ncurses_mvwaddstr($lower_win, 3, 1, "ESC - выход");
         // рисуем рамку вокруг окна
         ncurses_border(0, 0, 0, 0, 0, 0, 0, 0);
         ncurses_refresh(); // рисуем окна
-        ncurses_wrefresh($lower_win);
-        $this->currentDate();
-
-        while (true) {
-            $pressed = ncurses_getch();
-            if ($pressed == 27) {
-                break;
-            }
-
-            switch ($pressed) {
-                case NCURSES_KEY_UP:
-                    $this->year += 1;
-                    break;
-                case NCURSES_KEY_DOWN:
-                    $this->year -= 1;
-                    break;
-                case NCURSES_KEY_RIGHT:
-                    $this->month += 1;
-                    break;
-                case NCURSES_KEY_LEFT:
-                    $this->month -= 1;
-                    break;
-            }
-
-            $this->currentDate();
-        }
-        ncurses_end(); // выходим из режима ncurses, чистим экран
+        ncurses_wrefresh($lower_win); //рисуем нижнее окно
+        $this->buildCal();
     }
 }
 
-$output = new Output();
-$out_window = $output->out_window();
+ncurses_init(); //инициализация библиотеки
+$calendar = new Calendar();
+$calendar->outputWindows();
+define ("ESC", 27);
+while (true) {
+    $pressed = ncurses_getch();
+    if ($pressed == ESC) {
+        break;
+    }
+
+    switch ($pressed) {
+
+        case NCURSES_KEY_UP:
+            $calendar->year += 1;
+            break;
+        case NCURSES_KEY_DOWN:
+            $calendar->year -= 1;
+            break;
+        case NCURSES_KEY_RIGHT:
+            $calendar->month += 1;
+            break;
+        case NCURSES_KEY_LEFT:
+            $calendar->month -= 1;
+            break;
+    }
+    $calendar->outputWindows();
+}
+ncurses_end(); //выходим из режима ncurses, чистим экран
 
 
